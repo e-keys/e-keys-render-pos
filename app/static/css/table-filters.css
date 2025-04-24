@@ -1,0 +1,91 @@
+/* Estilos para las tablas con ordenamiento */
+.sortable-table thead th {
+    position: relative;
+    cursor: pointer;
+}
+
+.sortable-table thead th:not(.no-sort):hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.sortable-table thead th[data-order]::after {
+    content: '';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+}
+
+.sortable-table thead th[data-order="asc"]::after {
+    border-bottom: 5px solid #000;
+}
+
+.sortable-table thead th[data-order="desc"]::after {
+    border-top: 5px solid #000;
+}
+
+/* Estilos para las gráficas */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Estilos para los dashboards */
+.dashboard-card {
+    transition: transform 0.3s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Estilos para los indicadores de rendimiento */
+.kpi-card {
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.kpi-card .kpi-value {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.kpi-card .kpi-label {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+/* Estilos para las gráficas de tendencias */
+.trend-chart {
+    height: 250px;
+    margin-bottom: 20px;
+}
+
+/* Estilos para los indicadores de estado */
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.status-success {
+    background-color: #28a745;
+}
+
+.status-warning {
+    background-color: #ffc107;
+}
+
+.status-danger {
+    background-color: #dc3545;
+} 

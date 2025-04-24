@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Estadísticas Generales -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Ventas Totales</h5>
+                    <h1 class="mt-1 mb-3">{{ ventas_totales }} unidades</h1>
+                    <div class="mb-1">
+                        <span class="text-success">Unidades vendidas</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Ingresos Totales</h5>
+                    <h1 class="mt-1 mb-3">${{ "%.2f"|format(ingresos_totales) }}</h1>
+                    <div class="mb-1">
+                        <span class="text-success">Ingresos acumulados</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Ganancia Total</h5>
+                    <h1 class="mt-1 mb-3">${{ "%.2f"|format(ganancia_total) }}</h1>
+                    <div class="mb-1">
+                        <span class="text-success">Ganancia acumulada</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Licencias Activas</h5>
+                    <h1 class="mt-1 mb-3">{{ licencias_activas }}</h1>
+                    <div class="mb-1">
+                        <span class="text-success">Licencias en uso</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row">
+        <!-- Historial de Ingresos y Ganancias -->
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Historial de Ingresos y Ganancias</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="historicoChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canales de Venta -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Canales de Venta</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="canalesVentaChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Productos Más Vendidos -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Productos Más Vendidos</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="productosVendidosChart" style="height: 250px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos Disponibles -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Stock Disponible por Producto</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="productosDisponiblesChart" style="height: 250px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos con Stock Bajo -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Productos con Stock Bajo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Stock</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for producto in productos_stock_bajo %}
+                                <tr>
+                                    <td>{{ producto.nombre }}</td>
+                                    <td>{{ producto.stock }}</td>
+                                    <td>
+                                        <span class="badge {% if producto.stock <= producto.stock_minimo %}bg-danger{% elif producto.stock <= producto.stock_minimo * 2 %}bg-warning{% else %}bg-success{% endif %}">
+                                            {% if producto.stock <= producto.stock_minimo %}
+                                                Crítico
+                                            {% elif producto.stock <= producto.stock_minimo * 2 %}
+                                                Bajo
+                                            {% else %}
+                                                OK
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Licencias por Expirar -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Licencias por Expirar</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cliente</th>
+                                    <th>Días Restantes</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for licencia in licencias_por_expirar %}
+                                <tr>
+                                    <td>{{ licencia.producto_nombre }}</td>
+                                    <td>{{ licencia.cliente_nombre }}</td>
+                                    <td>{{ licencia.dias_restantes|round|int }}</td>
+                                    <td>
+                                        <span class="badge {% if licencia.dias_restantes|round|int <= 7 %}bg-danger{% elif licencia.dias_restantes|round|int <= 15 %}bg-warning{% else %}bg-info{% endif %}">
+                                            {{ licencia.dias_restantes|round|int }} días
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Datos para las gráficas
+    const chartData = {
+        meses: {{ meses|tojson|safe }},
+        ingresos_mensuales: {{ ingresos_mensuales|tojson|safe }},
+        ganancias_mensuales: {{ ganancias_mensuales|tojson|safe }},
+        productos_labels: {{ productos_labels|tojson|safe }},
+        productos_data: {{ productos_data|tojson|safe }},
+        canales_labels: {{ canales_labels|tojson|safe }},
+        canales_data: {{ canales_data|tojson|safe }},
+        productos_disp_labels: {{ productos_disp_labels|tojson|safe }},
+        productos_disp_data: {{ productos_disp_data|tojson|safe }}
+    };
+
+    // Objeto para almacenar las instancias de las gráficas
+    let charts = {};
+
+    // Función para destruir una gráfica si existe
+    function destroyChart(chartId) {
+        if (charts[chartId]) {
+            charts[chartId].destroy();
+            charts[chartId] = null;
+        }
+    }
+
+    // Función para inicializar las gráficas
+    function initializeCharts() {
+        // Gráfica de histórico de ventas
+        const historicoCtx = document.getElementById('historicoChart');
+        if (historicoCtx) {
+            destroyChart('historico');
+            charts['historico'] = new Chart(historicoCtx, {
+                type: 'line',
+                data: {
+                    labels: chartData.meses,
+                    datasets: [{
+                        label: 'Ingresos',
+                        data: chartData.ingresos_mensuales,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        fill: true
+                    }, {
+                        label: 'Ganancias',
+                        data: chartData.ganancias_mensuales,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfica de productos más vendidos
+        const productosVendidosCtx = document.getElementById('productosVendidosChart');
+        if (productosVendidosCtx) {
+            destroyChart('productosVendidos');
+            charts['productosVendidos'] = new Chart(productosVendidosCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartData.productos_labels,
+                    datasets: [{
+                        data: chartData.productos_data,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.5)',
+                            'rgba(54, 162, 235, 0.5)',
+                            'rgba(255, 206, 86, 0.5)',
+                            'rgba(75, 192, 192, 0.5)',
+                            'rgba(153, 102, 255, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfica de canales de venta
+        const canalesVentaCtx = document.getElementById('canalesVentaChart');
+        if (canalesVentaCtx) {
+            destroyChart('canalesVenta');
+            charts['canalesVenta'] = new Chart(canalesVentaCtx, {
+                type: 'pie',
+                data: {
+                    labels: chartData.canales_labels,
+                    datasets: [{
+                        data: chartData.canales_data,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.5)',
+                            'rgba(54, 162, 235, 0.5)',
+                            'rgba(255, 206, 86, 0.5)',
+                            'rgba(75, 192, 192, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfica de productos disponibles
+        const productosDisponiblesCtx = document.getElementById('productosDisponiblesChart');
+        if (productosDisponiblesCtx) {
+            destroyChart('productosDisponibles');
+            charts['productosDisponibles'] = new Chart(productosDisponiblesCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.productos_disp_labels,
+                    datasets: [{
+                        label: 'Stock Disponible',
+                        data: chartData.productos_disp_data,
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Inicializar las gráficas cuando el documento esté listo
+    document.addEventListener('DOMContentLoaded', initializeCharts);
+
+    // Imprimir los datos para depuración
+    console.log('Chart Data:', chartData);
+</script>
+{% endblock %} 

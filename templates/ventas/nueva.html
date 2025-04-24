@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Venta{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Nueva Venta</h1>
+        <a href="{{ url_for('ventas.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <!-- Formulario -->
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <!-- Cliente y Producto -->
+                    <div class="col-md-6 mb-3">
+                        <label for="cliente_id" class="form-label">Cliente</label>
+                        <select class="form-select" id="cliente_id" name="cliente_id" required>
+                            <option value="">Seleccionar cliente...</option>
+                            {% for cliente in clientes %}
+                            <option value="{{ cliente.id }}">{{ cliente.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="producto_id" class="form-label">Producto</label>
+                        <select class="form-select" id="producto_id" name="producto_id" required onchange="actualizarPrecios()">
+                            <option value="">Seleccionar producto...</option>
+                            {% for producto in productos %}
+                            <option value="{{ producto.id }}" data-precio="{{ producto.precio_unitario }}">
+                                {{ producto.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Usuario y Contraseña -->
+                    <div class="col-md-6 mb-3">
+                        <label for="usuario" class="form-label">Usuario</label>
+                        <input type="text" class="form-control" id="usuario" name="usuario" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="password" name="password" required>
+                            <button type="button" class="btn btn-outline-secondary" onclick="generarPassword()">
+                                <i class="fas fa-random"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Precio y Costo -->
+                    <div class="col-md-6 mb-3">
+                        <label for="precio_unitario" class="form-label">Precio de Venta</label>
+                        <input type="number" step="0.01" class="form-control" id="precio_unitario" name="precio_unitario" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Costo</label>
+                        <input type="text" class="form-control" id="costo" readonly>
+                    </div>
+
+                    <!-- Fecha de Expiración -->
+                    <div class="col-md-6 mb-3">
+                        <label for="fecha_expiracion" class="form-label">Fecha de Expiración</label>
+                        <input type="date" class="form-control" id="fecha_expiracion" name="fecha_expiracion" required>
+                    </div>
+
+                    <!-- Canal de Venta -->
+                    <div class="col-md-6 mb-3">
+                        <label for="canal_venta" class="form-label">Canal de Venta</label>
+                        <select class="form-select" id="canal_venta" name="canal_venta">
+                            <option value="">Seleccionar canal...</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="telegram">Telegram</option>
+                            <option value="email">Email</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+
+                    <!-- Categoría -->
+                    <div class="col-md-6 mb-3">
+                        <label for="categoria" class="form-label">Categoría</label>
+                        <select class="form-select" id="categoria" name="categoria">
+                            <option value="">Seleccionar categoría...</option>
+                            <option value="premium">Premium</option>
+                            <option value="estandar">Estándar</option>
+                            <option value="basico">Básico</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Venta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generarPassword() {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    document.getElementById("password").value = password;
+}
+
+function actualizarPrecios() {
+    const productoSelect = document.getElementById('producto_id');
+    const precioInput = document.getElementById('precio_unitario');
+    const costoInput = document.getElementById('costo');
+    
+    if (productoSelect.value) {
+        const option = productoSelect.options[productoSelect.selectedIndex];
+        const precio = option.dataset.precio;
+        precioInput.value = precio;
+        // El costo se mostrará cuando se seleccione el producto
+        costoInput.value = "{{ producto.precio_costo|format_currency }}";
+    } else {
+        precioInput.value = '';
+        costoInput.value = '';
+    }
+}
+
+// Establecer fecha mínima de expiración
+document.addEventListener('DOMContentLoaded', function() {
+    const fechaExpiracion = document.getElementById('fecha_expiracion');
+    const today = new Date().toISOString().split('T')[0];
+    fechaExpiracion.min = today;
+});
+</script>
+{% endblock %} 

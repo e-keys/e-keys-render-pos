@@ -1,16 +1,30 @@
-## Hi there 👋
+# E-KEYS POS
 
-<!--
-**e-keys/e-keys** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+Aplicación POS (Point of Sale) en Flask con SQLite. Compatible con despliegue gratuito en Render.
 
-Here are some ideas to get you started:
+## 🚀 Despliegue en Render
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+1. Sube el proyecto a un repositorio de GitHub.
+2. Entra a https://render.com
+3. Crea un nuevo Web Service conectado al repositorio.
+4. Usa los siguientes comandos:
+
+**Build command**:
+```
+pip install -r requirements.txt
+```
+
+**Start command**:
+```
+gunicorn run:app
+```
+
+**Python version**: 3.11.0
+
+## ⚙️ Requisitos
+
+- Flask
+- Flask-SQLAlchemy
+- Flask-WTF
+- Flask-Login
+- gunicorn 

@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Detalles del Cliente{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ cliente.nombre }}</h1>
+        <div>
+            <a href="{{ url_for('ventas.nuevo', cliente_id=cliente.id) }}" class="btn btn-success">
+                <i class="fas fa-shopping-cart"></i> Nueva Venta
+            </a>
+            <a href="{{ url_for('clientes.editar', id=cliente.id) }}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{{ url_for('clientes.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información del Cliente -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Información del Cliente</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Nombre</dt>
+                        <dd class="col-sm-8">{{ cliente.nombre }}</dd>
+                        
+                        <dt class="col-sm-4">Teléfono</dt>
+                        <dd class="col-sm-8">{{ cliente.telefono }}</dd>
+                        
+                        <dt class="col-sm-4">Email</dt>
+                        <dd class="col-sm-8">{{ cliente.email or 'No especificado' }}</dd>
+                        
+                        <dt class="col-sm-4">Dirección</dt>
+                        <dd class="col-sm-8">{{ cliente.direccion or 'No especificada' }}</dd>
+                        
+                        <dt class="col-sm-4">Notas</dt>
+                        <dd class="col-sm-8">{{ cliente.notas or 'Sin notas' }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Estadísticas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-primary text-white mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Total de Ventas</h6>
+                                    <h2 class="mb-0">{{ stats.total_ventas }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-success text-white mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Total Gastado</h6>
+                                    <h2 class="mb-0">${{ stats.total_gastado|format_currency }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-info text-white mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Promedio por Compra</h6>
+                                    <h2 class="mb-0">${{ stats.promedio_compra|format_currency }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-warning text-white mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Licencias Activas</h6>
+                                    <h2 class="mb-0">{{ licencias_activas|length }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Licencias y Ventas -->
+        <div class="col-md-8">
+            <!-- Licencias Activas -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Licencias Activas</h5>
+                    <span class="badge bg-primary">{{ licencias_activas|length }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Usuario</th>
+                                    <th>Precio</th>
+                                    <th>Expira en</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for venta in licencias_activas %}
+                                <tr>
+                                    <td>{{ venta.producto.nombre }}</td>
+                                    <td>{{ venta.usuario }}</td>
+                                    <td>${{ venta.precio_unitario|format_currency }}</td>
+                                    <td>
+                                        {% if venta.fecha_expiracion %}
+                                            {% set dias_restantes = (venta.fecha_expiracion - now).days %}
+                                            <span class="badge {% if dias_restantes <= 5 %}bg-danger{% elif dias_restantes <= 15 %}bg-warning{% else %}bg-success{% endif %}">
+                                                {{ dias_restantes }} días
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Sin fecha</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('ventas.detalles', id=venta.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No hay licencias activas</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Últimas Ventas -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Historial de Ventas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Producto</th>
+                                    <th>Precio</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for venta in ultimas_ventas %}
+                                <tr>
+                                    <td>{{ venta.fecha_venta.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ venta.producto.nombre }}</td>
+                                    <td>${{ venta.precio_unitario|format_currency }}</td>
+                                    <td>
+                                        <span class="badge {% if venta.fecha_expiracion and venta.fecha_expiracion < now %}bg-danger{% else %}bg-success{% endif %}">
+                                            {{ 'Expirada' if venta.fecha_expiracion and venta.fecha_expiracion < now else 'Activa' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('ventas.detalles', id=venta.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No hay ventas registradas</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

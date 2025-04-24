@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block title %}Detalles del Producto{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ producto.nombre }}</h1>
+        <div>
+            <a href="{{ url_for('inventario.editar', id=producto.id) }}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{{ url_for('inventario.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información del Producto -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Información del Producto</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3">
+                            <i class="fas fa-box text-primary"></i>
+                            <strong>Stock Actual:</strong>
+                            <span class="badge {% if producto.stock == 0 %}bg-danger{% elif producto.stock <= producto.stock_minimo %}bg-warning{% else %}bg-success{% endif %}">
+                                {{ producto.stock }}
+                            </span>
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            <strong>Stock Mínimo:</strong>
+                            <span>{{ producto.stock_minimo }}</span>
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-clock text-info"></i>
+                            <strong>Duración:</strong>
+                            <span>{{ producto.duracion }} días</span>
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-user text-primary"></i>
+                            <strong>Proveedor:</strong>
+                            <a href="{{ url_for('proveedores.detalles', id=producto.proveedor.id) }}" class="text-decoration-none">
+                                {{ producto.proveedor.nombre }}
+                            </a>
+                        </li>
+                        {% if producto.descripcion %}
+                        <li>
+                            <i class="fas fa-align-left text-muted"></i>
+                            <strong>Descripción:</strong>
+                            <p class="text-muted mb-0">{{ producto.descripcion }}</p>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Precios -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Información de Precios</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="small text-muted d-block">Precio de Costo</label>
+                            <h4 class="mb-0">{{ producto.precio_costo | format_currency }}</h4>
+                        </div>
+                        <div class="col-6">
+                            <label class="small text-muted d-block">Precio de Venta</label>
+                            <h4 class="mb-0">{{ producto.precio_venta | format_currency }}</h4>
+                        </div>
+                        <div class="col-12">
+                            <label class="small text-muted d-block">Margen de Ganancia</label>
+                            <h4 class="mb-0 text-success">
+                                {{ ((producto.precio_venta - producto.precio_costo) / producto.precio_costo * 100) | round(1) }}%
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ajuste de Stock -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Ajustar Stock</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('inventario.ajustar_stock', id=producto.id) }}">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="cantidad" class="form-label">Cantidad</label>
+                                <input type="number" class="form-control" id="cantidad" name="cantidad"
+                                       min="1" value="1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tipo_ajuste" class="form-label">Tipo de Ajuste</label>
+                                <select class="form-select" id="tipo_ajuste" name="tipo_ajuste" required>
+                                    <option value="incrementar">Incrementar</option>
+                                    <option value="decrementar">Decrementar</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-sync-alt"></i> Ajustar Stock
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas y Ventas -->
+        <div class="col-md-8">
+            <!-- Estadísticas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Estadísticas de Ventas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-1">Total Ventas</h6>
+                                    <h3 class="mb-0">{{ stats.total_ventas or 0 }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-1">Total Ingresos</h6>
+                                    <h3 class="mb-0">{{ stats.total_ingresos | format_currency }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-1">Precio Promedio</h6>
+                                    <h3 class="mb-0">{{ stats.precio_promedio | format_currency }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Licencias Activas -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Licencias Activas</h5>
+                    <span class="badge bg-primary">{{ ventas_activas|length }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover sortable-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Usuario</th>
+                                    <th data-type="number">Precio</th>
+                                    <th data-type="date">Expira en</th>
+                                    <th class="no-sort">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for venta in ventas_activas %}
+                                <tr>
+                                    <td>{{ venta.cliente.nombre }}</td>
+                                    <td>{{ venta.usuario }}</td>
+                                    <td>{{ venta.precio_unitario | format_currency }}</td>
+                                    <td>
+                                        {% if venta.fecha_expiracion %}
+                                            {% set dias_restantes = (venta.fecha_expiracion - now).days %}
+                                            <span class="badge {% if dias_restantes <= 5 %}bg-danger{% elif dias_restantes <= 15 %}bg-warning{% else %}bg-success{% endif %}">
+                                                {{ dias_restantes }} días
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Sin fecha</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('ventas.detalles', id=venta.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No hay licencias activas</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Credenciales -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Credenciales Disponibles</h5>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#agregarCredencialModal">
+                        <i class="fas fa-plus"></i> Agregar Credenciales
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover sortable-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Estado</th>
+                                    <th data-type="date">Fecha Creación</th>
+                                    <th data-type="date">Fecha Expiración</th>
+                                    <th class="no-sort">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for credencial in credenciales %}
+                                <tr>
+                                    <td>{{ credencial.usuario }}</td>
+                                    <td>
+                                        <span class="badge {% if credencial.estado == 'disponible' %}bg-success{% elif credencial.estado == 'vendido' %}bg-primary{% else %}bg-danger{% endif %}">
+                                            {{ credencial.estado }}
+                                        </span>
+                                    </td>
+                                    <td>{{ credencial.fecha_creacion.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if credencial.fecha_expiracion %}
+                                            {{ credencial.fecha_expiracion.strftime('%Y-%m-%d') }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-info" onclick="verCredencial('{{ credencial.id }}')">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            {% if credencial.estado == 'disponible' %}
+                                            <button type="button" class="btn btn-sm btn-warning" onclick="editarCredencial('{{ credencial.id }}')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="eliminarCredencial('{{ credencial.id }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No hay credenciales registradas</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Agregar Credenciales -->
+<div class="modal fade" id="agregarCredencialModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Credenciales</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCredenciales" method="POST" action="{{ url_for('inventario.agregar_credenciales', id=producto.id) }}">
+                    <div class="mb-3">
+                        <label for="credenciales" class="form-label">Credenciales</label>
+                        <textarea class="form-control" id="credenciales" name="credenciales" rows="5" required
+                                placeholder="Ingrese las credenciales en formato: usuario,contraseña&#10;Una credencial por línea"></textarea>
+                        <div class="form-text">
+                            Formato: usuario,contraseña (una credencial por línea)<br>
+                            Ejemplo:<br>
+                            usuario1,contraseña1<br>
+                            usuario2,contraseña2
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formCredenciales" class="btn btn-primary">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ver Credencial -->
+<div class="modal fade" id="verCredencialModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles de Credencial</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Usuario</label>
+                    <p id="verUsuario" class="form-control-plaintext"></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Contraseña</label>
+                    <p id="verContrasena" class="form-control-plaintext"></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Estado</label>
+                    <p id="verEstado" class="form-control-plaintext"></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Fecha de Creación</label>
+                    <p id="verFechaCreacion" class="form-control-plaintext"></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Fecha de Expiración</label>
+                    <p id="verFechaExpiracion" class="form-control-plaintext"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Editar Credencial -->
+<div class="modal fade" id="editarCredencialModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Credencial</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarCredencial">
+                    <input type="hidden" id="editCredencialId">
+                    <div class="mb-3">
+                        <label for="editUsuario" class="form-label">Usuario</label>
+                        <input type="text" class="form-control" id="editUsuario" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editContrasena" class="form-label">Contraseña</label>
+                        <input type="text" class="form-control" id="editContrasena" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarEdicionCredencial()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function verCredencial(id) {
+    fetch(`/inventario/credenciales/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('verUsuario').textContent = data.usuario;
+            document.getElementById('verContrasena').textContent = data.contrasena;
+            document.getElementById('verEstado').textContent = data.estado;
+            document.getElementById('verFechaCreacion').textContent = new Date(data.fecha_creacion).toLocaleString();
+            document.getElementById('verFechaExpiracion').textContent = data.fecha_expiracion ? new Date(data.fecha_expiracion).toLocaleDateString() : '-';
+            
+            new bootstrap.Modal(document.getElementById('verCredencialModal')).show();
+        });
+}
+
+function editarCredencial(id) {
+    fetch(`/inventario/credenciales/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('editCredencialId').value = id;
+            document.getElementById('editUsuario').value = data.usuario;
+            document.getElementById('editContrasena').value = data.contrasena;
+            
+            new bootstrap.Modal(document.getElementById('editarCredencialModal')).show();
+        });
+}
+
+function guardarEdicionCredencial() {
+    const id = document.getElementById('editCredencialId').value;
+    const data = {
+        usuario: document.getElementById('editUsuario').value,
+        contrasena: document.getElementById('editContrasena').value
+    };
+    
+    fetch(`/inventario/credenciales/${id}/editar`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error al editar la credencial');
+        }
+    });
+}
+
+function eliminarCredencial(id) {
+    if (confirm('¿Está seguro de eliminar esta credencial?')) {
+        fetch(`/inventario/credenciales/${id}/eliminar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error al eliminar la credencial');
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 

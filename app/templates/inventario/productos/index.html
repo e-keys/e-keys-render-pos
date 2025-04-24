@@ -1,0 +1,15 @@
+                            <th>ID</th>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Precio Costo</th>
+                            <th>Precio Venta</th>
+                            <th>Stock</th>
+                            <th>Acciones</th>
+                            <td>{{ producto.id }}</td>
+                            <td>{{ producto.codigo }}</td>
+                            <td>{{ producto.nombre }}</td>
+                            <td>{{ producto.tipo.nombre }}</td>
+                            <td>{{ producto.precio_costo|format_currency }}</td>
+                            <td>{{ producto.precio_venta|format_currency }}</td>
+                            <td>{{ producto.stock }}</td> 

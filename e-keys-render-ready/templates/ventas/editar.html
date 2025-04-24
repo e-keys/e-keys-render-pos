@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Venta{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Editar Venta</h1>
+        <a href="{{ url_for('ventas.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <!-- Formulario -->
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <!-- Cliente y Producto (no editables) -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Cliente</label>
+                        <input type="text" class="form-control" value="{{ venta.cliente.nombre }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Producto</label>
+                        <input type="text" class="form-control" value="{{ venta.producto.nombre }}" readonly>
+                    </div>
+
+                    <!-- Usuario y Contraseña -->
+                    <div class="col-md-6 mb-3">
+                        <label for="usuario" class="form-label">Usuario</label>
+                        <input type="text" class="form-control" id="usuario" name="usuario" value="{{ venta.usuario }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="password" name="password" value="{{ venta.password }}" required>
+                            <button type="button" class="btn btn-outline-secondary" onclick="generarPassword()">
+                                <i class="fas fa-random"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Precio y Costo -->
+                    <div class="col-md-6 mb-3">
+                        <label for="precio_unitario" class="form-label">Precio de Venta</label>
+                        <input type="number" step="0.01" class="form-control" id="precio_unitario" name="precio_unitario" value="{{ venta.precio_unitario }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Costo</label>
+                        <input type="text" class="form-control" value="{{ venta.producto.precio_costo|format_currency }}" readonly>
+                    </div>
+
+                    <!-- Fecha de Expiración -->
+                    <div class="col-md-6 mb-3">
+                        <label for="fecha_expiracion" class="form-label">Fecha de Expiración</label>
+                        <input type="date" class="form-control" id="fecha_expiracion" name="fecha_expiracion" value="{{ venta.fecha_expiracion.strftime('%Y-%m-%d') }}" required>
+                    </div>
+
+                    <!-- Canal de Venta -->
+                    <div class="col-md-6 mb-3">
+                        <label for="canal_venta" class="form-label">Canal de Venta</label>
+                        <select class="form-select" id="canal_venta" name="canal_venta">
+                            <option value="">Seleccionar canal...</option>
+                            <option value="whatsapp" {% if venta.canal_venta == 'whatsapp' %}selected{% endif %}>WhatsApp</option>
+                            <option value="telegram" {% if venta.canal_venta == 'telegram' %}selected{% endif %}>Telegram</option>
+                            <option value="email" {% if venta.canal_venta == 'email' %}selected{% endif %}>Email</option>
+                            <option value="otro" {% if venta.canal_venta == 'otro' %}selected{% endif %}>Otro</option>
+                        </select>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="col-md-6 mb-3">
+                        <label for="estado" class="form-label">Estado</label>
+                        <select class="form-select" id="estado" name="estado" required>
+                            <option value="activo" {% if venta.estado == 'activo' %}selected{% endif %}>Activo</option>
+                            <option value="expirado" {% if venta.estado == 'expirado' %}selected{% endif %}>Expirado</option>
+                            <option value="cancelado" {% if venta.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                        </select>
+                    </div>
+
+                    <!-- Categoría -->
+                    <div class="col-md-6 mb-3">
+                        <label for="categoria" class="form-label">Categoría</label>
+                        <select class="form-select" id="categoria" name="categoria">
+                            <option value="">Seleccionar categoría...</option>
+                            <option value="premium" {% if venta.categoria == 'premium' %}selected{% endif %}>Premium</option>
+                            <option value="estandar" {% if venta.categoria == 'estandar' %}selected{% endif %}>Estándar</option>
+                            <option value="basico" {% if venta.categoria == 'basico' %}selected{% endif %}>Básico</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generarPassword() {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    document.getElementById("password").value = password;
+}
+
+// Establecer fecha mínima de expiración
+document.addEventListener('DOMContentLoaded', function() {
+    const fechaExpiracion = document.getElementById('fecha_expiracion');
+    const today = new Date().toISOString().split('T')[0];
+    fechaExpiracion.min = today;
+});
+</script>
+{% endblock %} 

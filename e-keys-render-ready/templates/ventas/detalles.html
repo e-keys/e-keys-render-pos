@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Detalles de Venta{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Detalles de Venta</h1>
+        <div>
+            <a href="{{ url_for('ventas.editar', id=venta.id) }}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{{ url_for('ventas.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información Principal -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Información de la Venta</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Cliente:</dt>
+                                <dd class="col-sm-8">{{ venta.cliente.nombre }}</dd>
+
+                                <dt class="col-sm-4">Teléfono:</dt>
+                                <dd class="col-sm-8">{{ venta.cliente.telefono }}</dd>
+
+                                <dt class="col-sm-4">Producto:</dt>
+                                <dd class="col-sm-8">{{ venta.producto.nombre }}</dd>
+
+                                <dt class="col-sm-4">Categoría:</dt>
+                                <dd class="col-sm-8">{{ venta.producto.categoria if venta.producto.categoria else 'No especificada' }}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Fecha Venta:</dt>
+                                <dd class="col-sm-8">{{ venta.fecha_venta.strftime('%d/%m/%Y %H:%M') }}</dd>
+
+                                <dt class="col-sm-4">Canal:</dt>
+                                <dd class="col-sm-8">{{ venta.canal_venta if venta.canal_venta else 'No especificado' }}</dd>
+
+                                <dt class="col-sm-4">Estado:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge {% if venta.estado == 'activo' %}bg-success{% elif venta.estado == 'expirado' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                        {{ venta.estado|title }}
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-4">Expira en:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge {% if venta.dias_restantes is not none and venta.dias_restantes <= 7 %}bg-danger{% elif venta.dias_restantes is not none and venta.dias_restantes <= 30 %}bg-warning{% else %}bg-success{% endif %}">
+                                        {{ venta.dias_restantes if venta.dias_restantes is not none else 'N/A' }} días
+                                    </span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Credenciales -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Credenciales de Acceso</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Usuario</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{ venta.usuario }}" readonly>
+                                    <button class="btn btn-outline-secondary" onclick="copiarAlPortapapeles(this)" data-text="{{ venta.usuario }}">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Contraseña</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{ venta.password }}" readonly>
+                                    <button class="btn btn-outline-secondary" onclick="copiarAlPortapapeles(this)" data-text="{{ venta.password }}">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información Financiera -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Información Financiera</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-6">Precio de Venta:</dt>
+                        <dd class="col-sm-6 text-end">{{ venta.precio_unitario|format_currency }}</dd>
+
+                        <dt class="col-sm-6">Costo:</dt>
+                        <dd class="col-sm-6 text-end">{{ venta.producto.precio_costo|format_currency }}</dd>
+
+                        <dt class="col-sm-6">Ganancia:</dt>
+                        <dd class="col-sm-6 text-end fw-bold text-success">
+                            {{ venta.ganancia|format_currency }}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copiarAlPortapapeles(button) {
+    const texto = button.dataset.text;
+    navigator.clipboard.writeText(texto).then(() => {
+        // Cambiar el ícono temporalmente
+        const icon = button.querySelector('i');
+        icon.classList.remove('fa-copy');
+        icon.classList.add('fa-check');
+        
+        setTimeout(() => {
+            icon.classList.remove('fa-check');
+            icon.classList.add('fa-copy');
+        }, 1500);
+    });
+}
+</script>
+{% endblock %} 

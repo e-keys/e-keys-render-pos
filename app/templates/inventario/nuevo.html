@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Producto{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Nuevo Producto</h1>
+        <a href="{{ url_for('inventario.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <!-- Formulario -->
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="tipo_id" class="form-label">Tipo de Producto *</label>
+                            <select class="form-select" id="tipo_id" name="tipo_id" required>
+                                <option value="">Seleccionar tipo</option>
+                                {% for tipo in tipos_producto %}
+                                <option value="{{ tipo.id }}">{{ tipo.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="precio_costo" class="form-label">Precio de Costo</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="precio_costo" name="precio_costo" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="precio_venta" class="form-label">Precio de Venta</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="precio_venta" name="precio_venta" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="stock_minimo" class="form-label">Stock Mínimo</label>
+                            <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" value="5" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="proveedor_id" class="form-label">Proveedor</label>
+                            <select class="form-select" id="proveedor_id" name="proveedor_id">
+                                <option value="">Seleccionar proveedor</option>
+                                {% for proveedor in proveedores %}
+                                <option value="{{ proveedor.id }}" {% if request.args.get('proveedor_id')|int == proveedor.id %}selected{% endif %}>
+                                    {{ proveedor.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Validación del formulario
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+
+            // Validar que el precio de venta sea mayor al costo
+            const precioCosto = parseFloat(document.getElementById('precio_costo').value) || 0;
+            const precioVenta = parseFloat(document.getElementById('precio_venta').value) || 0;
+            
+            if (precioVenta <= precioCosto) {
+                event.preventDefault();
+                document.getElementById('precio_venta').setCustomValidity('El precio de venta debe ser mayor al precio de costo');
+            } else {
+                document.getElementById('precio_venta').setCustomValidity('');
+            }
+            
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+
+// Calcular precio de venta automáticamente (30% de margen)
+function calcularPrecioVenta() {
+    const precioCosto = parseFloat(document.getElementById('precio_costo').value) || 0;
+    const precioVenta = Math.round((precioCosto * 1.3) * 100) / 100;
+    document.getElementById('precio_venta').value = precioVenta;
+}
+
+// Resetear validación al limpiar formulario
+function resetForm() {
+    const form = document.querySelector('form');
+    form.classList.remove('was-validated');
+    document.getElementById('precio_venta').setCustomValidity('');
+}
+</script>
+{% endblock %} 

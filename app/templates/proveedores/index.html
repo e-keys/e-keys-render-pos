@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Proveedores{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Gestión de Proveedores</h1>
+        <a href="{{ url_for('proveedores.nuevo') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Nuevo Proveedor
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <!-- Búsqueda -->
+                <div class="col-md-12">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="buscar" name="buscar" 
+                               placeholder="Buscar por nombre, teléfono o email..." value="{{ buscar }}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                        {% if buscar %}
+                        <a href="{{ url_for('proveedores.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Limpiar
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de Proveedores -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped sortable-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th data-type="number">Productos</th>
+                            <th data-type="number">Sin Stock</th>
+                            <th data-type="number">Stock Bajo</th>
+                            <th class="no-sort">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for proveedor in proveedores %}
+                        <tr>
+                            <td>{{ proveedor.nombre }}</td>
+                            <td>
+                                <a href="tel:{{ proveedor.telefono }}" class="text-decoration-none">
+                                    {{ proveedor.telefono }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if proveedor.email %}
+                                <a href="mailto:{{ proveedor.email }}" class="text-decoration-none">
+                                    {{ proveedor.email }}
+                                </a>
+                                {% endif %}
+                            </td>
+                            <td>{{ proveedor.productos|length }}</td>
+                            <td>
+                                <span class="badge bg-danger">
+                                    {{ proveedor.productos_sin_stock }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-warning">
+                                    {{ proveedor.productos_stock_bajo }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('proveedores.detalles', id=proveedor.id) }}" class="btn btn-sm btn-info" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('proveedores.editar', id=proveedor.id) }}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger" title="Eliminar" 
+                                            onclick="confirmarEliminacion('{{ proveedor.id }}')"
+                                            {% if proveedor.productos %}disabled{% endif %}>
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <a href="{{ url_for('inventario.nuevo', proveedor_id=proveedor.id) }}" class="btn btn-sm btn-success" title="Nuevo Producto">
+                                        <i class="fas fa-box"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">No hay proveedores registrados</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="eliminarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar este proveedor?
+            </div>
+            <div class="modal-footer">
+                <form id="formEliminar" method="POST">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmarEliminacion(proveedorId) {
+    const modal = new bootstrap.Modal(document.getElementById('eliminarModal'));
+    const form = document.getElementById('formEliminar');
+    form.action = `{{ url_for('proveedores.eliminar', id=0) }}`.replace('0', proveedorId);
+    modal.show();
+}
+</script>
+{% endblock %} 

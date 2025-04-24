@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Venta{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Nueva Venta</h1>
+        <a href="{{ url_for('ventas.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <!-- Formulario -->
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="producto_id" class="form-label">Producto *</label>
+                            <select class="form-select" id="producto_id" name="producto_id" required onchange="cargarCredenciales(this.value)">
+                                <option value="">Seleccionar producto</option>
+                                {% for producto in productos %}
+                                <option value="{{ producto.id }}" data-precio="{{ producto.precio_venta }}">
+                                    {{ producto.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="credencial_id" class="form-label">Credencial *</label>
+                            <select class="form-select" id="credencial_id" name="credencial_id" required>
+                                <option value="">Primero seleccione un producto</option>
+                            </select>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-info" id="btnProbarCredenciales" onclick="probarCredenciales()">
+                                    Probar credenciales disponibles
+                                </button>
+                                <button type="button" class="btn btn-sm btn-success" id="btnCrearCredencial" style="display: none;" onclick="crearCredencialPrueba()">
+                                    Crear credencial de prueba
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cliente_id" class="form-label">Cliente *</label>
+                            <select class="form-select" id="cliente_id" name="cliente_id" required>
+                                <option value="">Seleccionar cliente</option>
+                                {% for cliente in clientes %}
+                                <option value="{{ cliente.id }}">{{ cliente.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="precio_unitario" class="form-label">Precio *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="precio_unitario" name="precio_unitario" step="0.01" required>
+                            </div>
+                            <small class="text-muted">Precio sugerido: $<span id="precio_sugerido">0.00</span></small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descuento" class="form-label">Descuento</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="descuento" name="descuento" step="0.01" min="0" value="0">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="fecha_venta" class="form-label">Fecha de Venta *</label>
+                            <input type="date" class="form-control" id="fecha_venta" name="fecha_venta" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="fecha_expiracion" class="form-label">Fecha de Expiración *</label>
+                            <input type="date" class="form-control" id="fecha_expiracion" name="fecha_expiracion" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="cantidad" class="form-label">Cantidad</label>
+                        <input type="number" class="form-control" id="cantidad" name="cantidad" value="1" min="1" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="canal_venta" class="form-label">Canal de Venta</label>
+                        <select class="form-select" id="canal_venta" name="canal_venta" required>
+                            <option value="">Seleccione un canal</option>
+                            <option value="presencial">Presencial</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="telegram">Telegram</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="email">Email</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="estado" class="form-label">Estado</label>
+                        <select class="form-select" id="estado" name="estado" required>
+                            <option value="activo">Activo</option>
+                            <option value="expirado">Expirado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8 mb-3">
+                        <label for="notas" class="form-label">Notas</label>
+                        <textarea class="form-control" id="notas" name="notas" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Función para cargar credenciales
+    async function cargarCredenciales(productoId) {
+        console.log(`[DEBUG] Cargando credenciales para producto ${productoId}`);
+        
+        if (!productoId) {
+            console.log('[DEBUG] No hay producto seleccionado');
+            document.getElementById('credencial_id').innerHTML = '<option value="">Primero seleccione un producto</option>';
+            document.getElementById('btnCrearCredencial').style.display = 'none';
+            return;
+        }
+        
+        const selectCredenciales = document.getElementById('credencial_id');
+        selectCredenciales.innerHTML = '<option value="">Cargando credenciales...</option>';
+        
+        try {
+            const response = await fetch(`/inventario/producto/${productoId}/credenciales`);
+            const data = await response.json();
+            
+            if (data && data.length > 0) {
+                selectCredenciales.innerHTML = '<option value="">Seleccione una credencial</option>';
+                data.forEach(credencial => {
+                    selectCredenciales.innerHTML += `<option value="${credencial.id}">${credencial.usuario} (${credencial.estado})</option>`;
+                });
+                document.getElementById('btnCrearCredencial').style.display = 'none';
+            } else {
+                selectCredenciales.innerHTML = '<option value="">No hay credenciales disponibles</option>';
+                document.getElementById('btnCrearCredencial').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error al cargar credenciales:', error);
+            selectCredenciales.innerHTML = '<option value="">Error al cargar credenciales</option>';
+            document.getElementById('btnCrearCredencial').style.display = 'block';
+        }
+        
+        // Actualizar precio
+        const productoSelect = document.getElementById('producto_id');
+        const precio = productoSelect.options[productoSelect.selectedIndex].dataset.precio;
+        document.getElementById('precio_sugerido').textContent = parseFloat(precio).toFixed(2);
+        document.getElementById('precio_unitario').value = precio;
+        calcularPrecioConDescuento();
+    }
+
+    // Función para probar credenciales
+    function probarCredenciales() {
+        const productoId = document.getElementById('producto_id').value;
+        const productoNombre = document.getElementById('producto_id').options[document.getElementById('producto_id').selectedIndex].text;
+        
+        if (!productoId) {
+            alert('Primero seleccione un producto');
+            return;
+        }
+
+        console.log('[DEBUG] Probando credenciales disponibles para el producto:', productoId);
+        
+        // Intentar con diferentes rutas
+        const rutas = [
+            `/inventario/producto/${productoId}/credenciales`,
+            `/inventario/credenciales/producto/${productoId}`,
+            `/credenciales/producto/${productoId}/disponibles`
+        ];
+        
+        function intentarRuta(rutas, indice) {
+            if (indice >= rutas.length) {
+                console.error('[DEBUG] Todas las rutas fallaron');
+                alert('Error al obtener credenciales disponibles');
+                return;
+            }
+            
+            const url = rutas[indice];
+            console.log(`[DEBUG] Intentando con la ruta ${indice + 1}: ${url}`);
+            
+            fetch(url)
+                .then(response => {
+                    console.log('[DEBUG] Respuesta recibida:', response.status);
+                    if (!response.ok) {
+                        return intentarRuta(rutas, indice + 1);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data) {
+                        return intentarRuta(rutas, indice + 1);
+                    }
+                    
+                    console.log('[DEBUG] Datos recibidos:', data);
+                    alert(`Credenciales disponibles para ${productoNombre}: ${data.length}`);
+                })
+                .catch(error => {
+                    console.error('[DEBUG] Error al probar credenciales:', error);
+                    intentarRuta(rutas, indice + 1);
+                });
+        }
+        
+        // Comenzar con la primera ruta
+        intentarRuta(rutas, 0);
+    }
+
+    // Función para crear credencial de prueba
+    function crearCredencialPrueba() {
+        const productoId = document.getElementById('producto_id').value;
+        if (!productoId) {
+            alert('Primero seleccione un producto');
+            return;
+        }
+        
+        console.log('[DEBUG] Creando credencial de prueba para el producto:', productoId);
+        fetch(`/inventario/crear-credencial-prueba/${productoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('[DEBUG] Respuesta:', data);
+            if (data.success) {
+                alert('Credencial de prueba creada exitosamente');
+                // Recargar credenciales
+                cargarCredenciales(productoId);
+            } else {
+                alert('Error al crear credencial de prueba: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('[DEBUG] Error al crear credencial de prueba:', error);
+            alert('Error al crear credencial de prueba: ' + error.message);
+        });
+    }
+
+    // Función para calcular precio con descuento
+    function calcularPrecioConDescuento() {
+        const precioSugerido = parseFloat(document.getElementById('precio_sugerido').textContent);
+        const descuento = parseFloat(document.getElementById('descuento').value) || 0;
+        const precioFinal = precioSugerido * (1 - descuento/100);
+        document.getElementById('precio_unitario').value = precioFinal.toFixed(2);
+    }
+
+    // Configurar eventos cuando el documento esté listo
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('[DEBUG] DOM cargado');
+        
+        // Configurar evento de descuento
+        document.getElementById('descuento').addEventListener('input', calcularPrecioConDescuento);
+        
+        // Establecer fecha actual en el campo de fecha de venta
+        document.getElementById('fecha_venta').valueAsDate = new Date();
+        
+        // Calcular fecha de expiración (30 días por defecto)
+        const fechaExpiracion = new Date();
+        fechaExpiracion.setDate(fechaExpiracion.getDate() + 30);
+        document.getElementById('fecha_expiracion').valueAsDate = fechaExpiracion;
+    });
+</script>
+{% endblock %} 

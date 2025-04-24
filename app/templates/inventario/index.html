@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Inventario{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Gestión de Inventario</h1>
+        <a href="{{ url_for('inventario.nuevo') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuevo Producto
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <!-- Búsqueda -->
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="buscar" name="buscar" 
+                               placeholder="Buscar por nombre..." value="{{ buscar }}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                        {% if buscar or proveedor_id or stock %}
+                        <a href="{{ url_for('inventario.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Limpiar
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Filtro por Proveedor -->
+                <div class="col-md-4">
+                    <select class="form-select" name="proveedor_id" onchange="this.form.submit()">
+                        <option value="">Todos los Proveedores</option>
+                        {% for proveedor in proveedores %}
+                        <option value="{{ proveedor.id }}" {% if proveedor_id == proveedor.id %}selected{% endif %}>
+                            {{ proveedor.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Filtro por Stock -->
+                <div class="col-md-4">
+                    <select class="form-select" name="stock" onchange="this.form.submit()">
+                        <option value="">Todos los Estados</option>
+                        <option value="sin_stock" {% if stock == 'sin_stock' %}selected{% endif %}>Sin Stock</option>
+                        <option value="bajo_stock" {% if stock == 'bajo_stock' %}selected{% endif %}>Bajo Stock</option>
+                        <option value="con_stock" {% if stock == 'con_stock' %}selected{% endif %}>Stock Normal</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de Productos -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover sortable-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th data-type="number">Stock</th>
+                            <th data-type="number">Stock Mínimo</th>
+                            <th data-type="number">Precio Costo</th>
+                            <th data-type="number">Precio Venta</th>
+                            <th class="status">Estado</th>
+                            <th class="no-sort">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos %}
+                        <tr>
+                            <td>{{ producto.nombre }}</td>
+                            <td>{{ producto.descripcion }}</td>
+                            <td>{{ producto.stock }}</td>
+                            <td>{{ producto.stock_minimo }}</td>
+                            <td>${{ "%.2f"|format(producto.precio_costo) }}</td>
+                            <td>${{ "%.2f"|format(producto.precio_venta) }}</td>
+                            <td>
+                                <span class="badge {% if producto.stock <= producto.stock_minimo %}bg-danger{% elif producto.stock <= producto.stock_minimo * 2 %}bg-warning{% else %}bg-success{% endif %}">
+                                    {% if producto.stock <= producto.stock_minimo %}
+                                    Bajo Stock
+                                    {% elif producto.stock <= producto.stock_minimo * 2 %}
+                                    Stock Medio
+                                    {% else %}
+                                    Stock OK
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('inventario.detalles', id=producto.id) }}" class="btn btn-sm btn-info" title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('inventario.editar', id=producto.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ producto.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales de confirmación de eliminación -->
+{% for producto in productos %}
+<div class="modal fade" id="deleteModal{{ producto.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Está seguro que desea eliminar este producto?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{{ url_for('inventario.eliminar', id=producto.id) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmarEliminacion(productoId) {
+    const modal = new bootstrap.Modal(document.getElementById('eliminarModal'));
+    const form = document.getElementById('formEliminar');
+    form.action = `{{ url_for('inventario.eliminar', id=0) }}`.replace('0', productoId);
+    modal.show();
+}
+</script>
+{% endblock %} 

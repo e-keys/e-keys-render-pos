@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Editar Credencial</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Producto</label>
+                            <input type="text" class="form-control" value="{{ credencial.producto.nombre }}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="usuario" class="form-label">Usuario</label>
+                            <input type="text" class="form-control" id="usuario" name="usuario" value="{{ credencial.usuario or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="contrasena" class="form-label">Contraseña</label>
+                            <input type="text" class="form-control" id="contrasena" name="contrasena" value="{{ credencial.contrasena or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="estado" class="form-label">Estado</label>
+                            <select name="estado" id="estado" class="form-select" required>
+                                {% for estado in estados %}
+                                <option value="{{ estado }}" {% if credencial.estado == estado %}selected{% endif %}>
+                                    {{ estado|title }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="fecha_expiracion" class="form-label">Fecha de Expiración</label>
+                            <input type="date" class="form-control" id="fecha_expiracion" name="fecha_expiracion" 
+                                   value="{{ credencial.fecha_expiracion.strftime('%Y-%m-%d') if credencial.fecha_expiracion else '' }}">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            <a href="{{ url_for('credenciales.index') }}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

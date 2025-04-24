@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Credenciales</h1>
+        <div>
+            <a href="{{ url_for('credenciales.nueva') }}" class="btn btn-primary me-2">
+                <i class="fas fa-plus"></i> Nueva Credencial
+            </a>
+            <a href="{{ url_for('credenciales.importar') }}" class="btn btn-success">
+                <i class="fas fa-file-import"></i> Importar Credenciales
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="producto" class="form-label">Producto</label>
+                    <select name="producto" id="producto" class="form-select">
+                        <option value="">Todos</option>
+                        {% for producto in productos %}
+                        <option value="{{ producto.nombre }}" {% if request.args.get('producto') == producto.nombre %}selected{% endif %}>
+                            {{ producto.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="estado" class="form-label">Estado</label>
+                    <select name="estado" id="estado" class="form-select">
+                        <option value="">Todos</option>
+                        {% for estado in estados %}
+                        <option value="{{ estado }}" {% if request.args.get('estado') == estado %}selected{% endif %}>
+                            {{ estado|title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                    <a href="{{ url_for('credenciales.index') }}" class="btn btn-secondary">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de credenciales -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped sortable-table">
+                    <thead>
+                        <tr>
+                            <th data-type="number">ID</th>
+                            <th>Producto</th>
+                            <th>Usuario</th>
+                            <th>Estado</th>
+                            <th data-type="date">Fecha Creación</th>
+                            <th data-type="date">Fecha Expiración</th>
+                            <th class="no-sort">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for credencial in credenciales %}
+                        <tr>
+                            <td>{{ credencial.id }}</td>
+                            <td>{{ credencial.producto.nombre }}</td>
+                            <td>{{ credencial.usuario or 'N/A' }}</td>
+                            <td>
+                                <span class="badge {% if credencial.estado == 'disponible' %}bg-success{% elif credencial.estado == 'vendido' %}bg-primary{% else %}bg-danger{% endif %}">
+                                    {{ credencial.estado|title }}
+                                </span>
+                            </td>
+                            <td>{{ credencial.fecha_creacion.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ credencial.fecha_expiracion.strftime('%Y-%m-%d') if credencial.fecha_expiracion else 'N/A' }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('credenciales.editar', id=credencial.id) }}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if credencial.estado == 'disponible' %}
+                                    <form action="{{ url_for('credenciales.eliminar', id=credencial.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta credencial?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

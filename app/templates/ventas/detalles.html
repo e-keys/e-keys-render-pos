@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Detalles de Venta{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Detalles de Venta</h1>
+        <div>
+            <a href="{{ url_for('ventas.editar', id=venta.id) }}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#eliminarModal">
+                <i class="fas fa-trash"></i> Eliminar
+            </button>
+            <a href="{{ url_for('ventas.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Información de la Venta</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Cliente:</dt>
+                                <dd class="col-sm-8">{{ venta.cliente.nombre }}</dd>
+
+                                <dt class="col-sm-4">Teléfono:</dt>
+                                <dd class="col-sm-8">{{ venta.cliente.telefono }}</dd>
+
+                                <dt class="col-sm-4">Producto:</dt>
+                                <dd class="col-sm-8">{{ venta.producto.nombre }}</dd>
+
+                                <dt class="col-sm-4">Precio:</dt>
+                                <dd class="col-sm-8">${{ "%.2f"|format(venta.precio_unitario) }}</dd>
+
+                                <dt class="col-sm-4">Total:</dt>
+                                <dd class="col-sm-8">${{ "%.2f"|format(venta.total) }}</dd>
+
+                                <dt class="col-sm-4">Ganancia:</dt>
+                                <dd class="col-sm-8">${{ "%.2f"|format(venta.ganancia) }}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Fecha Venta:</dt>
+                                <dd class="col-sm-8">{{ venta.fecha_venta.strftime('%d/%m/%Y') }}</dd>
+
+                                <dt class="col-sm-4">Expiración:</dt>
+                                <dd class="col-sm-8">{{ venta.fecha_expiracion.strftime('%d/%m/%Y') }}</dd>
+
+                                <dt class="col-sm-4">Días Restantes:</dt>
+                                <dd class="col-sm-8">
+                                    {% if venta.dias_restantes > 0 %}
+                                        <span class="badge bg-success">{{ venta.dias_restantes }} días</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Expirado</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-4">Estado:</dt>
+                                <dd class="col-sm-8">
+                                    {% if venta.estado_actual == 'activo' %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% elif venta.estado_actual == 'vencido' %}
+                                        <span class="badge bg-danger">Vencido</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Cancelado</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-4">Canal:</dt>
+                                <dd class="col-sm-8">{{ venta.canal_venta }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Credenciales</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Contraseña</th>
+                                    <th>Estado</th>
+                                    <th>Fecha Creación</th>
+                                    <th>Fecha Expiración</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ venta.credencial.usuario }}</td>
+                                    <td>{{ venta.credencial.contrasena }}</td>
+                                    <td>
+                                        {% if venta.credencial.estado == 'vendido' %}
+                                            <span class="badge bg-success">Vendido</span>
+                                        {% elif venta.credencial.estado == 'expirado' %}
+                                            <span class="badge bg-danger">Expirado</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{{ venta.credencial.estado }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ venta.credencial.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ venta.credencial.fecha_expiracion.strftime('%d/%m/%Y') }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Notas</h5>
+                </div>
+                <div class="card-body">
+                    {% if venta.notas %}
+                        <p>{{ venta.notas }}</p>
+                    {% else %}
+                        <p class="text-muted">No hay notas para esta venta.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Cambiar el ícono temporalmente para indicar éxito
+        const button = event.target.closest('button');
+        const icon = button.querySelector('i');
+        icon.className = 'fas fa-check';
+        setTimeout(() => {
+            icon.className = 'fas fa-copy';
+        }, 1000);
+    }).catch(function(err) {
+        console.error('Error al copiar: ', err);
+    });
+}
+</script>
+{% endblock %}
+
+<!-- Modal de confirmación para eliminar venta -->
+<div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eliminarModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea eliminar esta venta? Esta acción no se puede deshacer.</p>
+                <p><strong>Cliente:</strong> {{ venta.cliente.nombre }}</p>
+                <p><strong>Producto:</strong> {{ venta.producto.nombre }}</p>
+                <p><strong>Fecha:</strong> {{ venta.fecha_venta.strftime('%d/%m/%Y') }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{{ url_for('ventas.eliminar', id=venta.id) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div> 

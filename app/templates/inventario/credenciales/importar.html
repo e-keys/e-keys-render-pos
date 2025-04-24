@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Importar Credenciales</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="producto_id" class="form-label">Producto</label>
+                            <select name="producto_id" id="producto_id" class="form-select" required>
+                                <option value="">Seleccione un producto</option>
+                                {% for producto in productos %}
+                                <option value="{{ producto.id }}">{{ producto.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="credenciales" class="form-label">Credenciales</label>
+                            <textarea class="form-control" id="credenciales" name="credenciales" rows="10" required
+                                    placeholder="Ingrese las credenciales en formato: usuario,contraseña&#10;Una credencial por línea"></textarea>
+                            <div class="form-text">
+                                Formato: usuario,contraseña (una credencial por línea)<br>
+                                Ejemplo:<br>
+                                usuario1,contraseña1<br>
+                                usuario2,contraseña2
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Importar Credenciales</button>
+                            <a href="{{ url_for('credenciales.index') }}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

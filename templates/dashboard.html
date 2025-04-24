@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Tarjetas de Métricas -->
+<div class="row g-4 mb-4">
+    <!-- Ventas del Mes -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card card-stats bg-gradient-primary text-white">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <h6 class="text-uppercase mb-1">Ventas del Mes</h6>
+                        <h3 class="fw-bold mb-0">{{ total_ventas_mes|format_currency }}</h3>
+                    </div>
+                    <div class="col-auto">
+                        <div class="icon icon-shape bg-white text-primary rounded-circle shadow">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ganancia Neta -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card card-stats bg-gradient-success text-white">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <h6 class="text-uppercase mb-1">Ganancia Neta</h6>
+                        <h3 class="fw-bold mb-0">{{ ganancia_neta_mes|format_currency }}</h3>
+                    </div>
+                    <div class="col-auto">
+                        <div class="icon icon-shape bg-white text-success rounded-circle shadow">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Licencias Activas -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card card-stats bg-gradient-info text-white">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <h6 class="text-uppercase mb-1">Licencias Activas</h6>
+                        <h3 class="fw-bold mb-0">{{ licencias_activas }}</h3>
+                    </div>
+                    <div class="col-auto">
+                        <div class="icon icon-shape bg-white text-info rounded-circle shadow">
+                            <i class="fas fa-key"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Licencias por Expirar -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card card-stats bg-gradient-warning text-white">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <h6 class="text-uppercase mb-1">Por Expirar (7 días)</h6>
+                        <h3 class="fw-bold mb-0">{{ licencias_por_expirar|length }}</h3>
+                    </div>
+                    <div class="col-auto">
+                        <div class="icon icon-shape bg-white text-warning rounded-circle shadow">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráfica de Ventas y Licencias por Expirar -->
+<div class="row g-4 mb-4">
+    <!-- Gráfica de Ventas -->
+    <div class="col-12 col-xl-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Ventas Semanales</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="ventasChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Licencias por Expirar -->
+    <div class="col-12 col-xl-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Licencias por Expirar</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Producto</th>
+                                <th>Días</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for licencia in licencias_por_expirar %}
+                            <tr>
+                                <td>{{ licencia.cliente.nombre }}</td>
+                                <td>{{ licencia.producto.nombre }}</td>
+                                <td>
+                                    <span class="badge {% if licencia.dias_restantes <= 3 %}bg-danger{% else %}bg-warning{% endif %}">
+                                        {{ licencia.dias_restantes }} días
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Productos con Stock Bajo -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Productos con Stock Bajo</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Stock Actual</th>
+                                <th>Proveedor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in productos_stock_bajo %}
+                            <tr>
+                                <td>{{ producto.nombre }}</td>
+                                <td>{{ producto.categoria }}</td>
+                                <td>
+                                    <span class="badge bg-danger">
+                                        {{ producto.stock }} unidades
+                                    </span>
+                                </td>
+                                <td>{{ producto.proveedor.nombre }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Datos para la gráfica de ventas
+    const ventasData = {
+        labels: {{ ventas_semanales|map(attribute='semana')|list|tojson }},
+        datasets: [{
+            label: 'Ventas Semanales',
+            data: {{ ventas_semanales|map(attribute='total')|list|tojson }},
+            fill: true,
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+            tension: 0.4
+        }]
+    };
+
+    // Configuración de la gráfica
+    const ventasConfig = {
+        type: 'line',
+        data: ventasData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return formatCurrency(value);
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    // Inicializar la gráfica
+    new Chart(
+        document.getElementById('ventasChart'),
+        ventasConfig
+    );
+});
+</script>
+{% endblock %} 

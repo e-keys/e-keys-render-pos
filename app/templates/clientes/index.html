@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Gestión de Clientes</h1>
+        <a href="{{ url_for('clientes.nuevo') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Nuevo Cliente
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <!-- Búsqueda -->
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="buscar" name="buscar" 
+                               placeholder="Buscar por nombre, teléfono o email..." value="{{ buscar }}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                        {% if buscar or estado %}
+                        <a href="{{ url_for('clientes.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Limpiar
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Filtro por Estado -->
+                <div class="col-md-4">
+                    <select class="form-select" name="estado" onchange="this.form.submit()">
+                        <option value="">Todos los Estados</option>
+                        <option value="activo" {% if estado == 'activo' %}selected{% endif %}>Con Licencias Activas</option>
+                        <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>Sin Licencias Activas</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de Clientes -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover filterable-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Licencias Activas</th>
+                            <th>Total Ventas</th>
+                            <th>Total Gastado</th>
+                            <th class="no-filter">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cliente in clientes %}
+                        <tr>
+                            <td>{{ cliente.nombre }}</td>
+                            <td>
+                                <a href="tel:{{ cliente.telefono }}" class="text-decoration-none">
+                                    {{ cliente.telefono }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if cliente.email %}
+                                <a href="mailto:{{ cliente.email }}" class="text-decoration-none">
+                                    {{ cliente.email }}
+                                </a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if cliente.licencias_activas > 0 %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ cliente.licencias_activas }}
+                                </span>
+                            </td>
+                            <td>{{ cliente.total_ventas }}</td>
+                            <td>{{ cliente.total_gastado | format_currency }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('clientes.detalles', id=cliente.id) }}" class="btn btn-sm btn-info" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('clientes.editar', id=cliente.id) }}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger" title="Eliminar" 
+                                            onclick="confirmarEliminacion('{{ cliente.id }}')"
+                                            {% if cliente.ventas %}disabled{% endif %}>
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <a href="{{ url_for('ventas.nuevo', cliente_id=cliente.id) }}" class="btn btn-sm btn-success" title="Nueva Venta">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center">No hay clientes registrados</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="eliminarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar este cliente?
+            </div>
+            <div class="modal-footer">
+                <form id="formEliminar" method="POST">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmarEliminacion(clienteId) {
+    const modal = new bootstrap.Modal(document.getElementById('eliminarModal'));
+    const form = document.getElementById('formEliminar');
+    form.action = `{{ url_for('clientes.eliminar', id=0) }}`.replace('0', clienteId);
+    modal.show();
+}
+</script>
+{% endblock %} 
