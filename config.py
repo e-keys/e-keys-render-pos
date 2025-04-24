@@ -24,3 +24,5 @@ class Config:
     # Configuración de seguridad
     DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     TESTING = False 
+
+    # 🟢 Confirmación de sincronización con GitHub - Ángel
